@@ -1,0 +1,67 @@
+﻿!pip install --upgrade tensorflow
+
+from __future__ import print_function
+import pandas as pd
+pd.__version__
+
+import os
+os.getcwd()
+
+#Mouting the drive to load a simple dataset stored on the google drive
+from google.colab import drive
+drive.mount('/content/gdrive')
+
+#Loading a dataset into a dataframe
+#Use describe(), info(), head() functions to get simple statistics and a description of the dataset 
+spam_dataset_dataframe = pd.read_csv("/content/gdrive/My Drive/spam.csv", sep = 
+',')
+print('Dataset Loaded...')
+spam_dataset_dataframe.describe()
+
+#Use iloc to acces each row, index starts at 0 
+spam_dataset_dataframe.iloc[0:10]
+
+#Plot per feature histogram. figsize = (width, height)
+spam_dataset_dataframe.hist(bins=25,figsize=(15,10))
+
+from sklearn.model_selection import train_test_split
+
+#You can also use Scikit-Learn to create a training and test set.
+#random_state parameter fixes the seed.
+spam_training_set, spam_test_set = train_test_split(spam_dataset_dataframe, train_size=2300, test_size=2300, random_state=42)
+spam_dataset_dataframe.keys()
+spam_test_set.head() 
+spam_training_data, spam_training_target = spam_training_set[["make","address","all","3d","our","over","remove","internet","order","mail","receive","will","people","report","addresses","free","business","free","business","email","you","credit","your","font","0","money","hp","hpl","george","650","lab","labs","telnet","857","data","415","85","technology","1999","parts","pm","direct","cs","meeting","original","project","re","edu","table","conference","semicol","paren","bracket","bang","dollar","pound","cap_avg","cap_long","cap_total"]], spam_training_set["Class"] 
+spam_test_data, spam_test_target = spam_test_set[["make","address","all","3d","our","over","remove","internet","order","mail","receive","will","people","report","addresses","free","business","free","business","email","you","credit","your","font","0","money","hp","hpl","george","650","lab","labs","telnet","857","data","415","85","technology","1999","parts","pm","direct","cs","meeting","original","project","re","edu","table","conference","semicol","paren","bracket","bang","dollar","pound","cap_avg","cap_long","cap_total"]], spam_test_set["Class"]
+spam_test_data.head()
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn import tree
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.ensemble import AdaBoostClassifier, VotingClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import classification_report
+from sklearn.metrics import accuracy_score
+#clf = RandomForestClassifier(n_estimators=1000)
+#clf = DecisionTreeClassifier(criterion = "entropy")
+clf_dt = DecisionTreeClassifier(min_samples_split=10, max_depth = 1000, criterion = "entropy", splitter = "best", random_state=42, class_weight = "balanced",max_features="sqrt")
+#splitter = "best", max_depth = 10, min_samples_split=100, min_samples_leaf=1, random_state=42, class_weight = "balanced", min_weight_fraction_leaf=0, max_features="sqrt", min_impurity_decrease=0
+#clf = KNeighborsClassifier(n_neighbors=7)
+#clf = AdaBoostClassifier(n_estimators = 200, base_estimator=None)
+#LRI = LogisticRegression()
+clf_lr = LogisticRegression(solver='lbfgs', penalty = "l2", dual = False, tol = 1e-4, C = 1.0, fit_intercept = 1.0, intercept_scaling= 1.0, class_weight="none", random_state = 42,max_iter=3000, multi_class="auto", verbose = 0, warm_start = False)
+clf_gnb = GaussianNB()
+#clf = AdaBoostClassifier(n_estimators = 200,base_estimator=LRI)
+eclf = VotingClassifier(estimators = [('DT', clf_dt),('LR',clf_lr),('GNB',clf_gnb)], voting ='hard')
+#clf.fit(spam_training_data,spam_training_target)
+eclf.fit(spam_training_data,spam_training_target)
+
+
+spam_test_target_predict=eclf.predict(spam_test_data)
+accuracy_score(spam_test_target,spam_test_target_predict)
+confusion_matrix(spam_test_target,spam_test_target_predict)
+classification_report(spam_test_target,spam_test_target_predict)
+tree.plot_tree(clf)
